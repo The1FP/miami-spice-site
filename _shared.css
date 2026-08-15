@@ -9,3 +9,6 @@ h2{font-size:1.15rem;margin-top:2em}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0}
 a{color:var(--accent)}
 footer{color:var(--muted);font-size:.85rem;margin-top:3em;border-top:1px solid var(--line);padding-top:1em}
+.cta{display:inline-block;background:var(--accent);color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600}
+@media (prefers-color-scheme:dark){.cta{color:#12212B}}
+ul{padding-left:1.1em}
