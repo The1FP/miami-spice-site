@@ -1,0 +1,11 @@
+# app-ads.txt — authorised sellers for the Unofficial Miami Spice iPhone app.
+#
+# Buyers fetch this from the developer website named on the App Store listing
+# and check that the publisher selling the app's inventory is really us. Without
+# it a large share of programmatic demand simply refuses to bid, which shows up
+# as an empty banner rather than as an error.
+#
+# pub-3421724039499317 is the numeric half of the AdMob app ID
+# (ca-app-pub-3421724039499317~9282140366). f08c47fec0942fa0 is Google's own
+# certification authority ID and is the same for every AdMob publisher.
+google.com, pub-3421724039499317, DIRECT, f08c47fec0942fa0
