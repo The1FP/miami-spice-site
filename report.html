@@ -56,6 +56,10 @@ thing if you would rather use a browser.</p>
   <input type="hidden" name="app_version">
   <input type="hidden" name="app_build">
   <input type="hidden" name="data_date">
+  <!-- Sent by the iOS app only, and only when the reporter ticks the box.
+       Netlify captures a field only if it parsed it here at deploy time, so
+       this has to exist even though the web form never fills it in. -->
+  <input type="hidden" name="username">
   <input type="hidden" name="source" value="web">
 
   <p><button type="submit">Send report</button></p>
