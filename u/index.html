@@ -1,0 +1,149 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A list on Menu Bite</title>
+<meta name="description" content="Someone's restaurant-week list on Menu Bite.">
+<meta property="og:type" content="profile">
+<meta property="og:site_name" content="Menu Bite">
+<meta name="twitter:card" content="summary">
+<link rel="stylesheet" href="/_shared.css">
+<style>
+  .stats { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: 0.5rem 0 0; padding: 0; list-style: none; }
+  .stats li { font-size: 0.85rem; }
+  .stats b { display: block; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+  .list { list-style: none; padding: 0; }
+  .list li { padding: 0.6rem 0; border-bottom: 1px solid rgba(128,128,128,0.25); }
+  .list li:last-child { border-bottom: 0; }
+  .where { font-size: 0.8rem; opacity: 0.7; }
+  .quiet { opacity: 0.75; }
+</style>
+</head><body><main>
+<p class="sub"><a href="/">Menu Bite</a></p>
+
+<h1 id="handle">&nbsp;</h1>
+<p class="sub" id="tagline">Loading&hellip;</p>
+<ul class="stats" id="stats" hidden></ul>
+
+<div id="lists"></div>
+
+<p><a class="cta" href="https://apps.apple.com/app/id6801584203">Get the free iPhone app</a></p>
+<p class="sub">Already have it? Open this link on your iPhone and it opens
+straight to this profile.</p>
+
+<footer>Unofficial. Not affiliated with, endorsed by, or sponsored by any
+restaurant-week organiser. Menus and prices change during the season &mdash;
+confirm with the restaurant before you go.</footer>
+</main>
+
+<script>
+// The username is the last part of the path: /u/felipe -> felipe.
+// Matches the shape the database enforces, so a URL carrying anything else is
+// treated as no profile at all rather than sent to the server.
+var name = decodeURIComponent(
+  (location.pathname.split('/').filter(Boolean)[1] || ''));
+var valid = /^[A-Za-z0-9_]{3,20}$/.test(name);
+
+var KEY = 'sb_publishable_GGCj-yIeEsCnX1nbM-G1uw_YFYJXRaj';
+var API = 'https://ysbudzhkuqepsbqyjbga.supabase.co';
+var FEED = 'https://the1fp.github.io/miami-spice-site/data/index-v2.json';
+var handle = document.getElementById('handle');
+var tagline = document.getElementById('tagline');
+
+function rpc(fn, body) {
+  return fetch(API + '/rest/v1/rpc/' + fn, {
+    method: 'POST',
+    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY,
+               'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {})
+  }).then(function (r) { return r.ok ? r.json() : []; })
+    .catch(function () { return []; });
+}
+
+function nothing(message) {
+  handle.textContent = 'Nothing here';
+  tagline.textContent = message;
+}
+
+if (!valid) {
+  nothing('That link does not name anybody.');
+} else {
+  // The Open/Get banner needs the username, so it is written once we have one.
+  var banner = document.createElement('meta');
+  banner.name = 'apple-itunes-app';
+  banner.content = 'app-id=6801584203, app-argument=' + location.href;
+  document.head.appendChild(banner);
+  document.title = '@' + name + ' on Menu Bite';
+
+  Promise.all([
+    rpc('profile_for', { name: name }),
+    rpc('profile_list', { name: name }),
+    fetch(FEED).then(function (r) { return r.json(); })
+                .catch(function () { return { restaurants: [] }; })
+  ]).then(function (answers) {
+    var profile = (answers[0] || [])[0];
+    var entries = answers[1] || [];
+    var byID = {};
+    (answers[2].restaurants || []).forEach(function (r) { byID[r.id] = r; });
+
+    if (!profile) {
+      // Deliberately the same words whether the account never existed or is
+      // unavailable. Anything more specific tells somebody they were blocked.
+      nothing('That account does not exist, or is not available.');
+      return;
+    }
+
+    handle.textContent = '@' + profile.username;
+    tagline.textContent = 'Their restaurant-week list';
+
+    var stats = document.getElementById('stats');
+    [['rated', profile.rated], ['reviewed', profile.reviewed],
+     ['followers', profile.followers]].forEach(function (pair) {
+      var li = document.createElement('li');
+      li.innerHTML = '<b></b>';
+      li.firstChild.textContent = pair[1];
+      li.appendChild(document.createTextNode(pair[0]));
+      stats.appendChild(li);
+    });
+    stats.hidden = false;
+
+    var groups = { saved: [], been: [] };
+    entries.forEach(function (e) {
+      var r = byID[e.restaurant_id];
+      if (r && groups[e.kind]) { groups[e.kind].push(r); }
+    });
+
+    var lists = document.getElementById('lists');
+    [['saved', 'Wants to go'], ['been', 'Been there']].forEach(function (pair) {
+      var items = groups[pair[0]];
+      if (!items.length) { return; }
+      var h = document.createElement('h2');
+      h.textContent = pair[1];
+      var ul = document.createElement('ul');
+      ul.className = 'list';
+      items.forEach(function (r) {
+        var li = document.createElement('li');
+        var strong = document.createElement('strong');
+        strong.textContent = r.name;
+        var where = document.createElement('div');
+        where.className = 'where';
+        where.textContent = [r.neighborhood, r.city].filter(Boolean).join(' \u00b7 ');
+        li.appendChild(strong);
+        li.appendChild(where);
+        ul.appendChild(li);
+      });
+      lists.appendChild(h);
+      lists.appendChild(ul);
+    });
+
+    if (!groups.saved.length && !groups.been.length) {
+      var p = document.createElement('p');
+      p.className = 'quiet';
+      p.textContent = profile.shares_list
+        ? 'They have not added anywhere yet.'
+        : 'They have not shared their list. Their ratings and reviews are in the app.';
+      lists.appendChild(p);
+    }
+  });
+}
+</script>
+</body></html>
